@@ -1,0 +1,19 @@
+syntax = "proto2";
+package tutorial;
+
+message pingAck {
+
+    required int32 sourceId = 1;
+    required int32 seqNum = 2;
+    required bool isAck = 3;
+
+    enum messageType {
+        NORMAL = 0;
+        JOIN = 1;
+        LEAVE = 2;
+        FAIL = 3;
+    }
+
+    required messageType type = 4;
+    repeated int32 members = 5;
+}
