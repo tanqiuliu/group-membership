@@ -10,6 +10,7 @@ import membership_pb2
 
 
 # PORT = 10123
+cmd = ""
 MAXDATASIZE = 1024
 LOGPATH = 'log'
 logging.basicConfig(level=logging.DEBUG)
@@ -27,25 +28,20 @@ class Member(object):
         self.ip = ip
         self.port = port
         # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
-        self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
+        self.id = socket.gethostname()
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind((ip, port))
+        self.sock.bind(('', port))
         self.ackQueue = []
         self.ackQueueLock = threading.Lock()
         self.eventQueue = []
         self.eventQueueLock = threading.Lock()
         # self.memberList = {}    # key = MemberInfo.id, value = MemberInfo
         self.memberList = {
-            "127.0.0.1:12301_2018-10-02T15:08:03.614879": MemberInfo("127.0.0.1:12301_2018-10-02T15:08:03.614879", "127.0.0.1", 12301),
-            "127.0.0.1:12302_2018-10-02T15:08:03.614879": MemberInfo("127.0.0.1:12302_2018-10-02T15:08:03.614879", "127.0.0.1", 12302),
-            "127.0.0.1:12303_2018-10-02T15:08:03.614879": MemberInfo("127.0.0.1:12303_2018-10-02T15:08:03.614879", "127.0.0.1", 12303),
-            "127.0.0.1:12304_2018-10-02T15:08:03.614879": MemberInfo("127.0.0.1:12304_2018-10-02T15:08:03.614879", "127.0.0.1", 12304),
-            "127.0.0.1:12305_2018-10-02T15:08:03.614879": MemberInfo("127.0.0.1:12305_2018-10-02T15:08:03.614879", "127.0.0.1", 12305),
         }
         self.period = 1   # in seconds
         self.seqNum = 0
         self.runRecv()
-        self.runPing()
+        self.runPingThreaded()
 
     def ping(self, target_id):
         if target_id not in self.memberList:
@@ -83,7 +79,7 @@ class Member(object):
         c = 0
         prev_target_id = ""
         g = g_tick()
-        while(True):
+        while cmd != "Leave":
             time.sleep(next(g))
             if c == len(curMemberIdList):
                 curMemberIdList = list(self.memberList.keys())
@@ -110,6 +106,7 @@ class Member(object):
             self.updateMemberList()
             c += 1
             self.seqNum += 1
+        print("We have stopped pinging at time: " + str(datetime.datetime.now()))
 
     def updateMemberList(self):
         with self.eventQueueLock:
@@ -127,7 +124,7 @@ class Member(object):
             self.eventQueue = []
                 
     def _runRecv(self):
-        while(True):
+        while cmd != "Leave":
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
@@ -141,6 +138,7 @@ class Member(object):
             with self.eventQueueLock:
                 for event in msgRecvd.events:
                     self.eventQueue.append(event)
+        print("_runRecv has stopped at: " + str(datetime.datetime.now()))
 
     def constructAckMsg(self, ping_msg):
         msg = membership_pb2.PingAck()
@@ -151,6 +149,9 @@ class Member(object):
     
     def runRecv(self):
         th = threading.Thread(target=self._runRecv).start()
+
+    def runPingThreaded(self):
+        rp = threading.Thread(target=self.runPing).start()
 
 
 if __name__ == "__main__":
@@ -164,3 +165,14 @@ if __name__ == "__main__":
     if(not os.path.isdir(LOGPATH)):
         os.makedirs(LOGPATH)
     member = Member(ip, port)
+
+    while cmd != "Leave":
+        cmd = input("Options are Leave, Members, and Id: ")
+        if cmd == "Id":
+            print(member.id)
+        elif cmd == "Members":
+            print("The ids in the membership list are: " + " ".join(str(x) for x in member.memberList.keys()))
+
+    print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
+    sys.exit()
+
