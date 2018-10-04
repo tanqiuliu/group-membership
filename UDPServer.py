@@ -12,8 +12,9 @@ anotherMessage = pingAck_pb2.pingAck()
 
 while True:
 	data, addr = sock.recvfrom(1024)
+	print(data)
 	anotherMessage.ParseFromString(data)
 	print(anotherMessage)
 	print(anotherMessage.members)
 	print(anotherMessage.members[0])
-	print("Received : " + anotherMessage)
+	print(anotherMessage)
