@@ -28,9 +28,9 @@ class Member(object):
         self.ip = ip
         self.port = port
         # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
-        self.id = socket.gethostname()
+        self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.bind(('', port))
+        self.sock.bind((ip, port))
         self.ackQueue = []
         self.ackQueueLock = threading.Lock()
         self.eventQueue = []
@@ -155,16 +155,26 @@ class Member(object):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python Member.py <PORT>")
+    if len(sys.argv) < 2:
+        print("Usage: python Member.py <PORT> <Join(optional if introducer)>")
         sys.exit()
 
     port = int(sys.argv[1])
     # ip = socket.gethostbyname(socket.gethostname())
-    ip = '127.0.0.1'
+    ip = socket.gethostname()
     if(not os.path.isdir(LOGPATH)):
         os.makedirs(LOGPATH)
+
+    if len(sys.argv) == 3:
+        if(sys.argv[2].lower() == "join"):
+            print("something")
+
+    print("Starting up server at ip: " + ip)
     member = Member(ip, port)
+
+    if len(sys.argv) == 3:
+        if(sys.argv[2].lower() == "join"):
+            member.memberList['Introducer'] = MemberInfo('Introducer','fa18-cs425-g45-01.cs.illinois.edu', 12345)
 
     while cmd != "Leave":
         cmd = input("Options are Leave, Members, and Id: ")
