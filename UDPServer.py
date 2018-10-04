@@ -11,10 +11,9 @@ sock.bind(('', UDP_PORT))
 anotherMessage = pingAck_pb2.pingAck()
 
 while True:
-    data, addr = sock.recvfrom(1024)
+	data, addr = sock.recvfrom(1024)
 	anotherMessage.ParseFromString(data)
 	print(anotherMessage)
 	print(anotherMessage.members)
 	print(anotherMessage.members[0])
-
-    print ("received message: " + anotherMessage)
+	print("Received : " + anotherMessage)
