@@ -24,4 +24,6 @@ print(message)
 
 byteMessage = message.SerializeToString()
 
+print(byteMessage)
+
 sock.sendto(byteMessage, (UDP_IP, UDP_PORT))
