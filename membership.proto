@@ -1,0 +1,40 @@
+syntax = "proto2";
+
+package membership;
+
+message Event {
+    enum EventType {
+        JOIN = 0;
+        LEAVE = 1;
+        FAIL = 2;
+    }
+    required EventType eventType = 1;
+    required string memberId = 2;
+    required string memberIp = 3;
+    required int32 memberPort = 4;
+}
+
+message PingAck {
+    enum MsgType {
+        PING = 0;
+        ACK = 1;
+        PINGREQ = 2;
+    }
+    required string sourceId = 1;
+    required int32 seqNum = 2;
+    required MsgType msgType = 3;
+    repeated Event events = 4;
+}
+
+// message PingReq {
+//     enum MsgType {
+//         PING = 0;
+//         ACK = 1;
+//         PINGREQ = 2;
+//     }
+//     required string sourceId = 1;
+//     required string targetId = 2;
+//     required int32 seqNum = 3;
+//     required MsgType msgType = 4;
+//     repeated Event events = 5;
+// }
