@@ -55,7 +55,7 @@ class Member(object):
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
-        logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+        #logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
 
         msg = None
         if pingNum == 2:
@@ -163,7 +163,7 @@ class Member(object):
                 elif event.eventType == membership_pb2.Event.FAIL:
                     if event.memberId in self.memberList:
                         self.memberList.pop(event.memberId)
-                        logging.debug("%s is removed from memberList" %event.memberId)
+                        #logging.debug("%s is removed from memberList" %event.memberId)
             self.eventQueue = []
                 
     def _runRecv(self):
@@ -171,7 +171,7 @@ class Member(object):
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
-            logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
+            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
                     newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
