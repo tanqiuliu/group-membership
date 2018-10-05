@@ -138,7 +138,10 @@ class Member(object):
                 if event.eventType == membership_pb2.Event.JOIN:
                     print("We have a new member joining")
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
-                    self.memberList[member.id] = member
+                    if member.id != self.id:
+                        self.memberList[member.id] = member
+                    else:
+                        continue
                 elif event.eventType == membership_pb2.Event.LEAVE:
                     if event.memberId in self.memberList:
                         self.memberList.pop(event.memberId)
@@ -155,6 +158,9 @@ class Member(object):
             msgRecvd.ParseFromString(data)
             logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
+                if not self.memberList.contains(msgRecvd.id):
+                    newmember = MessageInfo(msgRecv.id, their_addr[0], their_addr[1])
+                    self.memberList[msgRecvd.id] = newmember
                 ack_msg = self.constructAckMsg(msgRecvd)
                 self.sock.sendto(ack_msg.SerializeToString(), their_addr)
             elif msgRecvd.msgType == membership_pb2.PingAck.ACK:
