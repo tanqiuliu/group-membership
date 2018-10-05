@@ -49,7 +49,7 @@ class Member(object):
         self.runPingThreaded()
 
     # If pingNum = 0, its a normal ping, 1 is a joinPing for first sending to introducer, 2 is a leavePing to all other nodes
-    def ping(self, target_id, pingNum):
+    def ping(self, target_id, pingNum=0):
         if target_id not in self.memberList:
             logging.debug("%s is not in the memberList" %target_id)
             return
