@@ -139,7 +139,6 @@ class Member(object):
                     print("We have a new member joining")
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     self.memberList[member.id] = member
-                    print("Has now joined " + self.memberList[member.id])
                 elif event.eventType == membership_pb2.Event.LEAVE:
                     if event.memberId in self.memberList:
                         self.memberList.pop(event.memberId)
