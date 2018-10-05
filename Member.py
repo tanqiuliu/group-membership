@@ -151,7 +151,7 @@ class Member(object):
             for event in self.eventQueue:
                 if event.eventType == membership_pb2.Event.JOIN:
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
-                    if member.id != self.id:
+                    if member.id != self.id and not member.id in self.memberList.keys():
                         print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
                         self.memberList[member.id] = member
                     else:
