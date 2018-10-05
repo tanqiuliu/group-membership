@@ -246,7 +246,7 @@ if __name__ == "__main__":
             member.ping('Introducer', 1)
         elif cmd == "Leave":
             member.leaving = len(member.memberList.keys())
-            print("Starting leave with " + member.leaving)
+            print("Starting leave with " + str(member.leaving))
 
     while member.leaving != 0:
         print(member.leaving)
