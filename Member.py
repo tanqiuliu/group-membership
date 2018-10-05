@@ -43,8 +43,7 @@ class Member(object):
             self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
         else:
             self.id = "Introducer"
-
-
+        self.leaving = -1
         self.runRecv()
         self.runPingThreaded()
 
@@ -114,37 +113,43 @@ class Member(object):
 
         curMemberIdList = list(self.memberList.keys())
         c = 0
-        prev_target_id = ""
         g = g_tick()
         while cmd != "Leave":
-            time.sleep(next(g))
-            if c >= len(curMemberIdList):
-                curMemberIdList = list(self.memberList.keys())
-                random.shuffle(curMemberIdList)
-                c = 0
-            # check if recv ack
-            with self.ackQueueLock:
-                if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
-                    if prev_target_id in self.memberList:
-                        failEvent = membership_pb2.Event()
-                        failEvent.eventType = membership_pb2.Event.FAIL
-                        failEvent.memberId = prev_target_id
-                        failEvent.memberIp = self.memberList[prev_target_id].ip
-                        failEvent.memberPort = self.memberList[prev_target_id].port
-                        self.eventQueue.append(failEvent)
-                        #logging.warning("%s failed!" %prev_target_id)
-                self.ackQueue = []
+            if self.leaving > 0:
+                time.sleep(next(g))
+                self.ping(curMemberIdList[self.leaving - 1], 2)
+                self.seqNum += 1
+                self.leaving -= 1
+            else:
+                prev_target_id = ""
+                time.sleep(next(g))
+                if c >= len(curMemberIdList):
+                    curMemberIdList = list(self.memberList.keys())
+                    random.shuffle(curMemberIdList)
+                    c = 0
+                # check if recv ack
+                with self.ackQueueLock:
+                    if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
+                        if prev_target_id in self.memberList:
+                            failEvent = membership_pb2.Event()
+                            failEvent.eventType = membership_pb2.Event.FAIL
+                            failEvent.memberId = prev_target_id
+                            failEvent.memberIp = self.memberList[prev_target_id].ip
+                            failEvent.memberPort = self.memberList[prev_target_id].port
+                            self.eventQueue.append(failEvent)
+                            #logging.warning("%s failed!" %prev_target_id)
+                    self.ackQueue = []
 
 
-            if (len(curMemberIdList) - 1) != -1:
-                self.ping(curMemberIdList[c])
-                prev_target_id = curMemberIdList[c]
-            # update memberList, make sure update after ping since updating memberList will empty eventQueue
-            self.updateMemberList()
+                if (len(curMemberIdList) - 1) != -1:
+                    self.ping(curMemberIdList[c])
+                    prev_target_id = curMemberIdList[c]
+                # update memberList, make sure update after ping since updating memberList will empty eventQueue
+                self.updateMemberList()
 
-            if (len(list(self.memberList.keys()))) != -1:
-                c += 1
-            self.seqNum += 1
+                if (len(list(self.memberList.keys()))) != -1:
+                    c += 1
+                self.seqNum += 1
 
     def updateMemberList(self):
         with self.eventQueueLock:
@@ -197,10 +202,14 @@ class Member(object):
         return msg
     
     def runRecv(self):
-        th = threading.Thread(target=self._runRecv).start()
+        th = threading.Thread(target=self._runRecv)
+        th.daemon = True
+        th.start()
 
     def runPingThreaded(self):
-        rp = threading.Thread(target=self.runPing).start()
+        rp = threading.Thread(target=self.runPing)
+        rp.daemon = True
+        rp.start()
 
 
 if __name__ == "__main__":
@@ -236,7 +245,13 @@ if __name__ == "__main__":
             member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
             member.ping('Introducer', 1)
 
+    member.leaving = len(member.memberList.keys())
+    print(member.leaving)
+
+    while member.leaving != 0:
+        print(member.leaving)
+        continue
 
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
-    sys.exit()
+    sys.exit(-1)
 
