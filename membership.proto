@@ -19,11 +19,13 @@ message PingAck {
         PING = 0;
         ACK = 1;
         PINGREQ = 2;
+        ACKREQ = 3;
     }
     required string sourceId = 1;
-    required int32 seqNum = 2;
+    required int32 seqNum = 2;          // postive seqNum for direct ping, negative seqNum for indirect ping
     required MsgType msgType = 3;
     repeated Event events = 4;
+    optional string targetId = 5;       // used for indirect ping & ack
 }
 
 // message PingReq {

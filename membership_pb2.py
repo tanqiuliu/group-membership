@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='membership',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=_b('\n\x10membership.proto\x12\nmembership\"\x9b\x01\n\x05\x45vent\x12.\n\teventType\x18\x01 \x02(\x0e\x32\x1b.membership.Event.EventType\x12\x10\n\x08memberId\x18\x02 \x02(\t\x12\x10\n\x08memberIp\x18\x03 \x02(\t\x12\x12\n\nmemberPort\x18\x04 \x02(\x05\"*\n\tEventType\x12\x08\n\x04JOIN\x10\x00\x12\t\n\x05LEAVE\x10\x01\x12\x08\n\x04\x46\x41IL\x10\x02\"\xa7\x01\n\x07PingAck\x12\x10\n\x08sourceId\x18\x01 \x02(\t\x12\x0e\n\x06seqNum\x18\x02 \x02(\x05\x12,\n\x07msgType\x18\x03 \x02(\x0e\x32\x1b.membership.PingAck.MsgType\x12!\n\x06\x65vents\x18\x04 \x03(\x0b\x32\x11.membership.Event\")\n\x07MsgType\x12\x08\n\x04PING\x10\x00\x12\x07\n\x03\x41\x43K\x10\x01\x12\x0b\n\x07PINGREQ\x10\x02')
+  serialized_pb=_b('\n\x10membership.proto\x12\nmembership\"\x9b\x01\n\x05\x45vent\x12.\n\teventType\x18\x01 \x02(\x0e\x32\x1b.membership.Event.EventType\x12\x10\n\x08memberId\x18\x02 \x02(\t\x12\x10\n\x08memberIp\x18\x03 \x02(\t\x12\x12\n\nmemberPort\x18\x04 \x02(\x05\"*\n\tEventType\x12\x08\n\x04JOIN\x10\x00\x12\t\n\x05LEAVE\x10\x01\x12\x08\n\x04\x46\x41IL\x10\x02\"\xc5\x01\n\x07PingAck\x12\x10\n\x08sourceId\x18\x01 \x02(\t\x12\x0e\n\x06seqNum\x18\x02 \x02(\x05\x12,\n\x07msgType\x18\x03 \x02(\x0e\x32\x1b.membership.PingAck.MsgType\x12!\n\x06\x65vents\x18\x04 \x03(\x0b\x32\x11.membership.Event\x12\x10\n\x08targetId\x18\x05 \x01(\t\"5\n\x07MsgType\x12\x08\n\x04PING\x10\x00\x12\x07\n\x03\x41\x43K\x10\x01\x12\x0b\n\x07PINGREQ\x10\x02\x12\n\n\x06\x41\x43KREQ\x10\x03')
 )
 
 
@@ -68,11 +68,15 @@ _PINGACK_MSGTYPE = _descriptor.EnumDescriptor(
       name='PINGREQ', index=2, number=2,
       serialized_options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='ACKREQ', index=3, number=3,
+      serialized_options=None,
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=317,
-  serialized_end=358,
+  serialized_start=335,
+  serialized_end=388,
 )
 _sym_db.RegisterEnumDescriptor(_PINGACK_MSGTYPE)
 
@@ -165,6 +169,13 @@ _PINGACK = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='targetId', full_name='membership.PingAck.targetId', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -179,7 +190,7 @@ _PINGACK = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=191,
-  serialized_end=358,
+  serialized_end=388,
 )
 
 _EVENT.fields_by_name['eventType'].enum_type = _EVENT_EVENTTYPE
