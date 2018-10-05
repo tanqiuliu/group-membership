@@ -114,7 +114,6 @@ class Member(object):
         c = 0
         g = g_tick()
         while cmd != "Leave":
-            print(cmd)
             prev_target_id = ""
             time.sleep(next(g))
             if c >= len(curMemberIdList):
