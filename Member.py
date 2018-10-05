@@ -196,10 +196,14 @@ class Member(object):
         return msg
     
     def runRecv(self):
-        th = threading.Thread(target=self._runRecv).start()
+        th = threading.Thread(target=self._runRecv)
+        th.daemon = True
+        th.start()
 
     def runPingThreaded(self):
         rp = threading.Thread(target=self.runPing).start()
+        rp.daemon = True
+        rp.start()
 
 
 if __name__ == "__main__":
