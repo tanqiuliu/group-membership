@@ -247,6 +247,7 @@ if __name__ == "__main__":
         elif cmd == "Leave":
             member.leaving = len(member.memberList.keys())
             print("Starting leave with " + str(member.leaving))
+            break;
 
     while member.leaving != 0:
         print(member.leaving)
