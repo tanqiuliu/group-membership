@@ -40,7 +40,7 @@ class Member(object):
         self.seqNum = 0
         if introducerId == "":
             # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
-            self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
+            self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()    # for debug
         else:
             self.id = "Introducer"
         self.leaving = -1
