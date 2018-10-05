@@ -24,11 +24,9 @@ class MemberInfo(object):
 class Member(object):
     
 
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, introducerId=""):
         self.ip = ip
         self.port = port
-        # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
-        self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((ip, port))
         self.ackQueue = []
@@ -40,17 +38,29 @@ class Member(object):
         }
         self.period = 1   # in seconds
         self.seqNum = 0
+        if introducerId == "":
+            # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
+            self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
+        else:
+            self.id = "Introducer"
+
+
         self.runRecv()
         self.runPingThreaded()
 
-    def ping(self, target_id):
+    def ping(self, target_id, joinPing=False):
         if target_id not in self.memberList:
             logging.debug("%s is not in the memberList" %target_id)
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
         logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
-        msg = self.constructPingMsg()
+
+        msg = None
+        if joinPing:
+            msg = self.constructJoiningPingMsg()
+        else:
+            msg = self.constructPingMsg()
         self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
 
     def constructPingMsg(self):
@@ -65,6 +75,18 @@ class Member(object):
                 event_piggybacked.memberId = event.memberId
                 event_piggybacked.memberIp = event.memberIp
                 event_piggybacked.memberPort = event.memberPort
+        return msg
+
+    def constructJoiningPingMsg(self):
+        msg = membership_pb2.PingAck()
+        msg.sourceId = self.id
+        msg.seqNum = self.seqNum
+        msg.msgType = membership_pb2.PingAck.PING
+        event = msg.events.add()
+        event.eventType = membership_pb2.Event.JOIN
+        event.memberId = self.id
+        event.memberIp = self.ip
+        event.memberPort = self.port
         return msg
 
     def runPing(self):
@@ -170,11 +192,17 @@ if __name__ == "__main__":
             print("something")
 
     print("Starting up server at ip: " + ip)
-    member = Member(ip, port)
+
+    member = None
+    if(len(sys.argv) == 2):
+        member = Member(ip, port, 'Introducer')
+    else:
+        member = Member(ip, port)
 
     if len(sys.argv) == 3:
         if(sys.argv[2].lower() == "join"):
             member.memberList['Introducer'] = MemberInfo('Introducer','fa18-cs425-g45-01.cs.illinois.edu', 12345)
+            member.ping('Introducer', True)
 
     while cmd != "Leave":
         cmd = input("Options are Leave, Members, and Id: ")
