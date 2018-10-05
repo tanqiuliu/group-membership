@@ -201,7 +201,7 @@ class Member(object):
         th.start()
 
     def runPingThreaded(self):
-        rp = threading.Thread(target=self.runPing).start()
+        rp = threading.Thread(target=self.runPing)
         rp.daemon = True
         rp.start()
 
