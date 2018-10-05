@@ -162,8 +162,8 @@ class Member(object):
                     else:
                         continue
                 elif event.eventType == membership_pb2.Event.LEAVE:
-                    print("We received a node Leave event from ip: " + event.memberIp)
-                    if event.memberId in self.memberList:
+                    if event.memberId in self.memberList and event.memberId != self.id:
+                        print("We received a node Leave event from ip: " + event.memberIp)
                         self.memberList.pop(event.memberId)
                 elif event.eventType == membership_pb2.Event.FAIL:
                     if event.memberId in self.memberList:
@@ -246,8 +246,10 @@ if __name__ == "__main__":
             member.ping('Introducer', 1)
         elif cmd == "Leave":
             member.leaving = len(member.memberList.keys())
+            print("Starting leave with " + member.leaving)
 
     while member.leaving != 0:
+        print(member.leaving)
         continue
 
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
