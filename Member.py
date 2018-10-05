@@ -43,7 +43,6 @@ class Member(object):
             self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
         else:
             self.id = "Introducer"
-        self.leaving = -1
         self.runRecv()
         self.runPingThreaded()
 
@@ -240,11 +239,6 @@ if __name__ == "__main__":
         elif cmd == "Join":
             member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
             member.ping('Introducer', 1)
-
-    member.leaving = len(member.memberList.keys())
-
-    while member.leaving != 0:
-        continue
 
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
     sys.exit(-1)
