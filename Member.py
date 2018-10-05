@@ -174,6 +174,7 @@ class Member(object):
             #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
+                    print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
                     newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                     self.memberList[msgRecvd.sourceId] = newmember
                 ack_msg = self.constructAckMsg(msgRecvd)
@@ -229,7 +230,7 @@ if __name__ == "__main__":
         if cmd == "Id":
             print(member.id)
         elif cmd == "Members":
-            print("The ids in the membership list are: " + "\n".join(str(x) for x in member.memberList.keys()))
+            print("The ids in the membership list are: \n ===================== \n" + "\n".join(str(x) for x in member.memberList.keys()) + "\n ===================== \n")
         elif cmd == "Join":
             member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
             member.ping('Introducer', 1)
