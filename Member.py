@@ -159,7 +159,7 @@ class Member(object):
             logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
-                    newmember = MessageInfo(msgRecv.sourceId, their_addr[0], their_addr[1])
+                    newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                     self.memberList[msgRecvd.sourceId] = newmember
                 ack_msg = self.constructAckMsg(msgRecvd)
                 self.sock.sendto(ack_msg.SerializeToString(), their_addr)
