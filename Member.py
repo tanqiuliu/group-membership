@@ -112,9 +112,9 @@ class Member(object):
 
         curMemberIdList = list(self.memberList.keys())
         c = 0
+        prev_target_id = ""
         g = g_tick()
         while cmd != "Leave":
-            prev_target_id = ""
             time.sleep(next(g))
             if c >= len(curMemberIdList):
                 curMemberIdList = list(self.memberList.keys())
