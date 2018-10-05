@@ -158,6 +158,7 @@ class Member(object):
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
                         print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
+                        print(self.memberList.keys())
                         self.memberList[member.id] = member
                     else:
                         continue
