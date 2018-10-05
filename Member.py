@@ -48,7 +48,8 @@ class Member(object):
         self.runRecv()
         self.runPingThreaded()
 
-    def ping(self, target_id, joinPing=False):
+    # If pingNum = 0, its a normal ping, 1 is a joinPing for first sending to introducer, 2 is a leavePing to all other nodes
+    def ping(self, target_id, pingNum):
         if target_id not in self.memberList:
             logging.debug("%s is not in the memberList" %target_id)
             return
@@ -57,7 +58,9 @@ class Member(object):
         logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
 
         msg = None
-        if joinPing:
+        if pingNum == 2:
+            msg = self.constructLeavingPingMsg()
+        elif pingNum == 1:
             msg = self.constructJoiningPingMsg()
         else:
             msg = self.constructPingMsg()
@@ -75,6 +78,18 @@ class Member(object):
                 event_piggybacked.memberId = event.memberId
                 event_piggybacked.memberIp = event.memberIp
                 event_piggybacked.memberPort = event.memberPort
+        return msg
+
+    def constructLeavingPingMsg(self):
+        msg = membership_pb2.PingAck()
+        msg.sourceId = self.id
+        msg.seqNum = self.seqNum
+        msg.msgType = membership_pb2.PingAck.PING
+        event = msg.events.add()
+        event.eventType = membership_pb2.Event.LEAVE
+        event.memberId = self.id
+        event.memberIp = self.ip
+        event.memberPort = self.port
         return msg
 
     def constructJoiningPingMsg(self):
@@ -130,19 +145,19 @@ class Member(object):
             if (len(list(self.memberList.keys()))) != -1:
                 c += 1
             self.seqNum += 1
-        print("We have stopped pinging at time: " + str(datetime.datetime.now()))
 
     def updateMemberList(self):
         with self.eventQueueLock:
             for event in self.eventQueue:
                 if event.eventType == membership_pb2.Event.JOIN:
-                    print("We have a new member joining")
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id:
+                        print("We have a new member joining who's ID is: " + member.id + " Ip:" + member.ip + " Port:" +  member.port)
                         self.memberList[member.id] = member
                     else:
                         continue
                 elif event.eventType == membership_pb2.Event.LEAVE:
+                    print("We received a node Leave event from ip: " + event.memberIp)
                     if event.memberId in self.memberList:
                         self.memberList.pop(event.memberId)
                 elif event.eventType == membership_pb2.Event.FAIL:
@@ -152,7 +167,7 @@ class Member(object):
             self.eventQueue = []
                 
     def _runRecv(self):
-        while cmd != "Leave":
+        while True:
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
@@ -169,7 +184,8 @@ class Member(object):
             with self.eventQueueLock:
                 for event in msgRecvd.events:
                     self.eventQueue.append(event)
-        print("_runRecv has stopped at: " + str(datetime.datetime.now()))
+
+
 
     def constructAckMsg(self, ping_msg):
         msg = membership_pb2.PingAck()
@@ -186,8 +202,9 @@ class Member(object):
 
 
 if __name__ == "__main__":
+    #Error message if the person didn't add a port
     if len(sys.argv) < 2:
-        print("Usage: python Member.py <PORT> <Join(optional if introducer)>")
+        print("Usage: python Member.py <PORT> <'isIntroducer'(sets this node to be introducer)>")
         sys.exit()
 
     port = int(sys.argv[1])
@@ -196,29 +213,27 @@ if __name__ == "__main__":
     if(not os.path.isdir(LOGPATH)):
         os.makedirs(LOGPATH)
 
-    if len(sys.argv) == 3:
-        if(sys.argv[2].lower() == "join"):
-            print("something")
-
     print("Starting up server at ip: " + ip)
 
+    #Sets up the member to be an introducer or not based on the 2nd parameter
     member = None
-    if(len(sys.argv) == 2):
-        member = Member(ip, port, 'Introducer')
+    if(len(sys.argv) == 3):
+        member = Member(ip, port, 'isIntroducer')
     else:
         member = Member(ip, port)
 
-    if len(sys.argv) == 3:
-        if(sys.argv[2].lower() == "join"):
-            member.memberList['Introducer'] = MemberInfo('Introducer','fa18-cs425-g45-01.cs.illinois.edu', 12345)
-            member.ping('Introducer', True)
-
+    #While the cmd is not to Leave the membership list, we want to offer giving out the Id, current membership list, or
+    #join through the introducer (The introducer will never use the Join function)
     while cmd != "Leave":
-        cmd = input("Options are Leave, Members, and Id: ")
+        cmd = input("Options are Leave, Members, Id, and Join: ")
         if cmd == "Id":
             print(member.id)
         elif cmd == "Members":
-            print("The ids in the membership list are: " + " ".join(str(x) for x in member.memberList.keys()))
+            print("The ids in the membership list are: " + "\n".join(str(x) for x in member.memberList.keys()))
+        elif cmd == "Join":
+            member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
+            member.ping('Introducer', 1)
+
 
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
     sys.exit()
