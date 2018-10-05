@@ -43,6 +43,7 @@ class Member(object):
             self.id = ip + ':' + str(port) + '_' + "2018-10-02T15:08:03.614879"     # for debug
         else:
             self.id = "Introducer"
+        self.leaving = -1
         self.runRecv()
         self.runPingThreaded()
 
@@ -114,36 +115,40 @@ class Member(object):
         c = 0
         prev_target_id = ""
         g = g_tick()
-        while cmd != "Leave":
+        while True:
             time.sleep(next(g))
-            if c >= len(curMemberIdList):
-                curMemberIdList = list(self.memberList.keys())
-                random.shuffle(curMemberIdList)
-                c = 0
-            # check if recv ack
-            with self.ackQueueLock:
-                if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
-                    if prev_target_id in self.memberList:
-                        failEvent = membership_pb2.Event()
-                        failEvent.eventType = membership_pb2.Event.FAIL
-                        failEvent.memberId = prev_target_id
-                        failEvent.memberIp = self.memberList[prev_target_id].ip
-                        failEvent.memberPort = self.memberList[prev_target_id].port
-                        self.eventQueue.append(failEvent)
-                        #logging.warning("%s failed!" %prev_target_id)
-                self.ackQueue = []
+            if self.leaving > 0:
+                ping(curMemberList[self.leaving - 1], 2)
+                seqNum += 1
+                self.leaving -= 1
+            else:
+                if c >= len(curMemberIdList):
+                    curMemberIdList = list(self.memberList.keys())
+                    random.shuffle(curMemberIdList)
+                    c = 0
+                # check if recv ack
+                with self.ackQueueLock:
+                    if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
+                        if prev_target_id in self.memberList:
+                            failEvent = membership_pb2.Event()
+                            failEvent.eventType = membership_pb2.Event.FAIL
+                            failEvent.memberId = prev_target_id
+                            failEvent.memberIp = self.memberList[prev_target_id].ip
+                            failEvent.memberPort = self.memberList[prev_target_id].port
+                            self.eventQueue.append(failEvent)
+                            #logging.warning("%s failed!" %prev_target_id)
+                    self.ackQueue = []
 
 
-            if (len(curMemberIdList) - 1) != -1:
-                self.ping(curMemberIdList[c])
-                prev_target_id = curMemberIdList[c]
-            # update memberList, make sure update after ping since updating memberList will empty eventQueue
-            self.updateMemberList()
+                if (len(curMemberIdList) - 1) != -1:
+                    self.ping(curMemberIdList[c])
+                    prev_target_id = curMemberIdList[c]
+                # update memberList, make sure update after ping since updating memberList will empty eventQueue
+                self.updateMemberList()
 
-            if (len(list(self.memberList.keys()))) != -1:
-                c += 1
-            self.seqNum += 1
-        print("The thread is still running")
+                if (len(list(self.memberList.keys()))) != -1:
+                    c += 1
+                self.seqNum += 1
 
     def updateMemberList(self):
         with self.eventQueueLock:
@@ -229,7 +234,7 @@ if __name__ == "__main__":
 
     #While the cmd is not to Leave the membership list, we want to offer giving out the Id, current membership list, or
     #join through the introducer (The introducer will never use the Join function)
-    while cmd != "Leave":
+    while True:
         cmd = input("Options are Leave, Members, Id, and Join: ")
         if cmd == "Id":
             print(member.id)
@@ -238,6 +243,11 @@ if __name__ == "__main__":
         elif cmd == "Join":
             member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
             member.ping('Introducer', 1)
+        elif cmd == "Leave":
+            member.leaving = len(member.memberList.keys())
+
+    while member.leaving != 0:
+        continue
 
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
     sys.exit(-1)
