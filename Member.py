@@ -158,7 +158,7 @@ class Member(object):
             msgRecvd.ParseFromString(data)
             logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
-                if not self.memberList.contains(msgRecvd.id):
+                if not self.memberList.keys().contains(msgRecvd.id):
                     newmember = MessageInfo(msgRecv.id, their_addr[0], their_addr[1])
                     self.memberList[msgRecvd.id] = newmember
                 ack_msg = self.constructAckMsg(msgRecvd)
