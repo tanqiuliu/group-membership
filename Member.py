@@ -132,7 +132,7 @@ class Member(object):
                         failEvent.memberIp = self.memberList[prev_target_id].ip
                         failEvent.memberPort = self.memberList[prev_target_id].port
                         self.eventQueue.append(failEvent)
-                        logging.warning("%s failed!" %prev_target_id)
+                        #logging.warning("%s failed!" %prev_target_id)
                 self.ackQueue = []
 
 
@@ -162,6 +162,7 @@ class Member(object):
                         self.memberList.pop(event.memberId)
                 elif event.eventType == membership_pb2.Event.FAIL:
                     if event.memberId in self.memberList:
+                        print("We received a failure from node : " + str(event.memberId))
                         self.memberList.pop(event.memberId)
                         #logging.debug("%s is removed from memberList" %event.memberId)
             self.eventQueue = []
