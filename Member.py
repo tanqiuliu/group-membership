@@ -103,11 +103,10 @@ class Member(object):
         g = g_tick()
         while cmd != "Leave":
             time.sleep(next(g))
-            if c == len(curMemberIdList):
+            if c >= len(curMemberIdList):
                 curMemberIdList = list(self.memberList.keys())
                 random.shuffle(curMemberIdList)
                 c = 0
-                print("==========================================================================================")
             # check if recv ack
             with self.ackQueueLock:
                 if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
@@ -120,13 +119,16 @@ class Member(object):
                         self.eventQueue.append(failEvent)
                         logging.warning("%s failed!" %prev_target_id)
                 self.ackQueue = []
-            if len(curMemberIdList)  == 0:  
-                continue
-            self.ping(curMemberIdList[c])
-            prev_target_id = curMemberIdList[c]
+
+
+            if (len(curMemberIdList) - 1) != -1:
+                self.ping(curMemberIdList[c])
+                prev_target_id = curMemberIdList[c]
             # update memberList, make sure update after ping since updating memberList will empty eventQueue
             self.updateMemberList()
-            c += 1
+
+            if (len(list(self.memberList.keys()))) != -1:
+                c += 1
             self.seqNum += 1
         print("We have stopped pinging at time: " + str(datetime.datetime.now()))
 
@@ -134,8 +136,10 @@ class Member(object):
         with self.eventQueueLock:
             for event in self.eventQueue:
                 if event.eventType == membership_pb2.Event.JOIN:
+                    print("We have a new member joining")
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     self.memberList[member.id] = member
+                    print("Has now joined " + self.memberList[member.id])
                 elif event.eventType == membership_pb2.Event.LEAVE:
                     if event.memberId in self.memberList:
                         self.memberList.pop(event.memberId)
