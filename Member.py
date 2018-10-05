@@ -118,9 +118,9 @@ class Member(object):
         while True:
             time.sleep(next(g))
             if self.leaving > 0:
-                print("We are now pinging a leave to " + str(curMemberList[self.leaving - 1]))
-                ping(curMemberList[self.leaving - 1], 2)
-                seqNum += 1
+                print("We are now pinging a leave to " + str(curMemberIdList[self.leaving - 1]))
+                self.ping(curMemberIdList[self.leaving - 1], 2)
+                self.seqNum += 1
                 self.leaving -= 1
             else:
                 if c >= len(curMemberIdList):
