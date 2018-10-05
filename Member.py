@@ -54,7 +54,7 @@ class Member(object):
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
-        logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+        #logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
 
         msg = None
         if pingNum == 2:
@@ -178,7 +178,7 @@ class Member(object):
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
-            logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
+            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
                     print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
