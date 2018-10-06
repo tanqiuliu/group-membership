@@ -304,11 +304,12 @@ class Member(object):
     def piggybackEvents(self, msg):
         with self.eventQueueLock:
             for event in self.eventQueue:
-                event_piggybacked = msg.events.add()
-                event_piggybacked.eventType = event.eventType
-                event_piggybacked.memberId = event.memberId
-                event_piggybacked.memberIp = event.memberIp
-                event_piggybacked.memberPort = event.memberPort
+                if event.memberId != self.memberId and event.eventType != membership_pb2.Event.JOIN:
+                    event_piggybacked = msg.events.add()
+                    event_piggybacked.eventType = event.eventType
+                    event_piggybacked.memberId = event.memberId
+                    event_piggybacked.memberIp = event.memberIp
+                    event_piggybacked.memberPort = event.memberPort
 
     def runRecv(self):
         th = threading.Thread(target=self._runRecv)
