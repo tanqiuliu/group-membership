@@ -193,9 +193,9 @@ class Member(object):
             with self.eventQueueLock:
                 for event in msgRecvd.events:
                     if event not in self.eventQueue:        # avoid duplicate events, need a expiration mechanism according to period
-                        if event.messageType == membership_pb2.Event.LEAVE and event.memberId in self.memberList.keys():
+                        if event.eventType == membership_pb2.Event.LEAVE and event.memberId in self.memberList.keys():
                             self.eventQueue.append(event)
-                        elif event.messageType == membership_pb2.Event.JOIN and not event.memberId in self.memberList.keys():
+                        elif event.eventType == membership_pb2.Event.JOIN and not event.memberId in self.memberList.keys():
                             self.eventQueue.append(event)
                         else:
                             self.eventQueue.append(event)
