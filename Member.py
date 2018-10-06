@@ -156,7 +156,7 @@ class Member(object):
                         self.memberList[newmember.id] = newmember
                         for member in self.memberList:
                             self.ping(newmember.id, 1)
-                elif if event.eventType == membership_pb2.Event.JOIN:
+                elif event.eventType == membership_pb2.Event.JOIN:
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
                         print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
