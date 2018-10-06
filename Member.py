@@ -177,7 +177,7 @@ class Member(object):
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
-            logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
+            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             '''
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
