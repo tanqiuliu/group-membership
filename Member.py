@@ -43,7 +43,7 @@ class Member(object):
         else:
             self.id = "Introducer"
         self.leaving = -1
-        self.pingTimeout = 0.2
+        self.pingTimeout = 0.02
         self.pingReqK = 3
         self.seqNum = 1
         self.runRecv()
