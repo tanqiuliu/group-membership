@@ -137,10 +137,11 @@ class Member(object):
                         pingReqFlag = True
                 if pingReqFlag:
                     logging.debug("Did not receive ack from %s, sending ping-req." % prev_target_id)
-                    self.pingReq(curMemberIdList[c])
+                    if c < len(self.memberList.keys()):
+                        self.pingReq(curMemberIdList[c])
                     pingReqFlag = False
 
-                if (len(list(self.memberList.keys()))) != -1:
+                if (len(list(self.memberList.keys())) - 1) != -1:
                     c += 1
                 self.seqNum += 1
                 time.sleep(next(g))
