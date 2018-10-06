@@ -37,15 +37,19 @@ class Member(object):
         self.memberList = {
         }
         self.period = 1   # in seconds
+<<<<<<< HEAD
+        self.seqNum = 0
         if introducerId == "":
             # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
             self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()    # for debug
         else:
             self.id = "Introducer"
         self.leaving = -1
+=======
         self.pingTimeout = 0.2
         self.pingReqK = 3
         self.seqNum = 1
+>>>>>>> 4a7ad0ecaa41e82bb1c607a29799244a6ef6705e
         self.runRecv()
         self.runPingThreaded()
 
@@ -56,7 +60,9 @@ class Member(object):
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
+<<<<<<< HEAD
         #logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+
         msg = None
         if pingNum == 2:
             msg = self.constructLeavingPingMsg()
@@ -64,8 +70,10 @@ class Member(object):
             msg = self.constructJoiningPingMsg()
         else:
             msg = self.constructPingMsg()
-        #self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
+        self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
+=======
         logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+        msg = self.constructPingMsg()
         if random.random() < 0.8:       # randomly drop some packet to test ping-req
             self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
 
@@ -75,15 +83,37 @@ class Member(object):
             return
         curMemberIdList = list(self.memberList.keys())
         random.shuffle(curMemberIdList)
-        indirectMembers = None
-        if len(curMemberIdList) >= 3:
-            indirectMembers = curMemberIdList[0:self.pingReqK]
-        else:
-            indirectMembers = curMemberIdList
+        indirectMembers = curMemberIdList[0:self.pingReqK]
         msg = self.constructPingReqMsg(target_id)
         for memberId in indirectMembers:
             candi_addr = self.memberList[memberId].ip, self.memberList[memberId].port
             self.sock.sendto(msg.SerializeToString(), candi_addr)
+>>>>>>> 4a7ad0ecaa41e82bb1c607a29799244a6ef6705e
+
+
+    def constructLeavingPingMsg(self):
+        msg = membership_pb2.PingAck()
+        msg.sourceId = self.id
+        msg.seqNum = self.seqNum
+        msg.msgType = membership_pb2.PingAck.PING
+        event = msg.events.add()
+        event.eventType = membership_pb2.Event.LEAVE
+        event.memberId = self.id
+        event.memberIp = self.ip
+        event.memberPort = self.port
+        return msg
+
+    def constructJoiningPingMsg(self):
+        msg = membership_pb2.PingAck()
+        msg.sourceId = self.id
+        msg.seqNum = self.seqNum
+        msg.msgType = membership_pb2.PingAck.PING
+        event = msg.events.add()
+        event.eventType = membership_pb2.Event.JOIN
+        event.memberId = self.id
+        event.memberIp = self.ip
+        event.memberPort = self.port
+        return msg
 
     def runPing(self):
         def g_tick():
@@ -99,6 +129,7 @@ class Member(object):
         prev_target_id = ""
         pingReqFlag = False
         g = g_tick()
+<<<<<<< HEAD
         while True:
             time.sleep(next(g))
             if self.leaving > 0:
@@ -130,21 +161,49 @@ class Member(object):
                     prev_target_id = curMemberIdList[c]
                 # update memberList, make sure update after ping since updating memberList will empty eventQueue
                 self.updateMemberList()
-                time.sleep(next(g))
 
-                with self.ackQueueLock:
-                    if (prev_target_id, self.seqNum) not in self.ackQueue and prev_target_id != "":
-                        pingReqFlag = True
-                if pingReqFlag:
-                    logging.debug("Did not receive ack from %s, sending ping-req." % prev_target_id)
-                    if c < len(self.memberList.keys()):
-                        self.pingReq(curMemberIdList[c])
-                    pingReqFlag = False
-
-                if (len(list(self.memberList.keys())) - 1) != -1:
+                if (len(list(self.memberList.keys()))) != -1:
                     c += 1
                 self.seqNum += 1
-                time.sleep(next(g))
+=======
+        while(True):
+            if c == len(curMemberIdList):
+                curMemberIdList = list(self.memberList.keys())
+                random.shuffle(curMemberIdList)
+                c = 0
+                print("==========================================================================================")
+            if len(curMemberIdList)  == 0:  
+                logging.warning("No member alive!")
+                break
+            # check if recv ack
+            with self.ackQueueLock:
+                if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
+                    if prev_target_id in self.memberList:
+                        failEvent = membership_pb2.Event()
+                        failEvent.eventType = membership_pb2.Event.FAIL
+                        failEvent.memberId = prev_target_id
+                        failEvent.memberIp = self.memberList[prev_target_id].ip
+                        failEvent.memberPort = self.memberList[prev_target_id].port
+                        self.eventQueue.append(failEvent)
+                        logging.warning("%s failed!" %prev_target_id)
+                self.ackQueue = []
+            self.ping(curMemberIdList[c])
+            prev_target_id = curMemberIdList[c]
+            # update memberList, make sure update after ping since updating memberList will empty eventQueue
+            self.updateMemberList()
+            time.sleep(next(g))
+            # check if recv this ping's ack, else ping-req
+            with self.ackQueueLock:
+                if (prev_target_id, self.seqNum) not in self.ackQueue and prev_target_id != "":
+                    pingReqFlag = True
+            if pingReqFlag:
+                logging.debug("Did not receive ack from %s, sending ping-req." %prev_target_id)
+                self.pingReq(curMemberIdList[c])
+                pingReqFlag = False
+            c += 1
+            self.seqNum += 1
+            time.sleep(next(g))
+>>>>>>> 4a7ad0ecaa41e82bb1c607a29799244a6ef6705e
 
     def updateMemberList(self):
         with self.eventQueueLock:
@@ -154,6 +213,7 @@ class Member(object):
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
                         print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
+                        print(self.memberList.keys())
                         self.memberList[member.id] = member
                     else:
                         continue
@@ -168,13 +228,16 @@ class Member(object):
                         #logging.debug("%s is removed from memberList" %event.memberId)
             self.eventQueue = []
 
+    def runRecv(self):
+        th = threading.Thread(target=self._runRecv).start()
+
     def _runRecv(self):
         while True:
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
+<<<<<<< HEAD
             msgRecvd.ParseFromString(data)
-            logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
-            '''
+            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
                     print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
@@ -182,7 +245,7 @@ class Member(object):
                     self.memberList[msgRecvd.sourceId] = newmember
                 ack_msg = self.constructAckMsg(msgRecvd)
                 self.sock.sendto(ack_msg.SerializeToString(), their_addr)
-            '''
+=======
             try:
                 msgRecvd.ParseFromString(data)
             except:
@@ -197,16 +260,13 @@ class Member(object):
             # handle different types of messages
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if msgRecvd.seqNum > 0:
-                    print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(
-                    their_addr[0]) + " Port:" + str(their_addr[1]))
-                    newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
-                    self.memberList[msgRecvd.sourceId] = newmember
                     ack_msg = self.constructAckMsg(msgRecvd)
                     self.sock.sendto(ack_msg.SerializeToString(), their_addr)
                 elif msgRecvd.seqNum < 0:
                     assert msgRecvd.targetId != None
                     ack_msg = self.constructAckReqMsg(msgRecvd)
                     self.sock.sendto(ack_msg.SerializeToString(), their_addr)
+>>>>>>> 4a7ad0ecaa41e82bb1c607a29799244a6ef6705e
             elif msgRecvd.msgType == membership_pb2.PingAck.ACK:
                 with self.ackQueueLock:
                     self.ackQueue.append((msgRecvd.sourceId, abs(msgRecvd.seqNum)))
@@ -224,7 +284,12 @@ class Member(object):
                 indirect_ack = self.constructIndirectAckMsg(msgRecvd)
                 ack_target_addr = self.memberList[msgRecvd.targetId].ip, self.memberList[msgRecvd.targetId].port
                 self.sock.sendto(indirect_ack.SerializeToString(), ack_target_addr)
+            
 
+<<<<<<< HEAD
+
+
+=======
     def constructPingMsg(self):
         msg = membership_pb2.PingAck()
         msg.sourceId = self.id
@@ -232,31 +297,8 @@ class Member(object):
         msg.msgType = membership_pb2.PingAck.PING
         self.piggybackEvents(msg)
         return msg
-
-    def constructLeavingPingMsg(self):
-        msg = membership_pb2.PingAck()
-        msg.sourceId = self.id
-        msg.seqNum = self.seqNum
-        msg.msgType = membership_pb2.PingAck.PING
-        event = msg.events.add()
-        event.eventType = membership_pb2.Event.LEAVE
-        event.memberId = self.id
-        event.memberIp = self.ip
-        event.memberPort = self.port
-        return msg
-
-    def constructJoiningPingMsg(self):
-        msg = membership_pb2.PingAck()
-        msg.sourceId = self.id
-        msg.seqNum = self.seqNum
-        msg.msgType = membership_pb2.PingAck.PING
-        event = msg.events.add()
-        event.eventType = membership_pb2.Event.JOIN
-        event.memberId = self.id
-        event.memberIp = self.ip
-        event.memberPort = self.port
-        return msg
-
+    
+>>>>>>> 4a7ad0ecaa41e82bb1c607a29799244a6ef6705e
     def constructAckMsg(self, ping_msg):
         msg = membership_pb2.PingAck()
         msg.sourceId = self.id
@@ -273,7 +315,18 @@ class Member(object):
         msg.msgType = membership_pb2.PingAck.PINGREQ
         self.piggybackEvents(msg)
         return msg
+    
+<<<<<<< HEAD
+    def runRecv(self):
+        th = threading.Thread(target=self._runRecv)
+        th.daemon = True
+        th.start()
 
+    def runPingThreaded(self):
+        rp = threading.Thread(target=self.runPing)
+        rp.daemon = True
+        rp.start()
+=======
     def constructIndirectPingMsg(self, pingreq_msg):
         msg = membership_pb2.PingAck()
         msg.targetId = pingreq_msg.targetId
@@ -310,15 +363,10 @@ class Member(object):
                 event_piggybacked.memberIp = event.memberIp
                 event_piggybacked.memberPort = event.memberPort
 
-    def runRecv(self):
-        th = threading.Thread(target=self._runRecv)
-        th.daemon = True
-        th.start()
 
-    def runPingThreaded(self):
-        rp = threading.Thread(target=self.runPing)
-        rp.daemon = True
-        rp.start()
+    
+    
+>>>>>>> 4a7ad0ecaa41e82bb1c607a29799244a6ef6705e
 
 
 if __name__ == "__main__":
