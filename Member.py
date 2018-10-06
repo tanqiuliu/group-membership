@@ -36,7 +36,7 @@ class Member(object):
         # self.memberList = {}    # key = MemberInfo.id, value = MemberInfo
         self.memberList = {
         }
-        self.period = 1   # in seconds
+        self.period = 0.5   # in seconds
         if introducerId == "":
             # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
             self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()    # for debug
@@ -65,7 +65,7 @@ class Member(object):
         else:
             msg = self.constructPingMsg()
         #self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
-        logging.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
+        #logging.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
         self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
 
     def pingReq(self, target_id):
@@ -136,7 +136,7 @@ class Member(object):
                     if (prev_target_id, self.seqNum) not in self.ackQueue and prev_target_id != "":
                         pingReqFlag = True
                 if pingReqFlag:
-                    logging.debug("Did not receive ack from %s, sending ping-req." % prev_target_id)
+                    #logging.debug("Did not receive ack from %s, sending ping-req." % prev_target_id)
                     if c < len(self.memberList.keys()):
                         self.pingReq(curMemberIdList[c])
                     pingReqFlag = False
@@ -148,7 +148,7 @@ class Member(object):
 
     def updateMemberList(self):
         with self.eventQueueLock:
-            print(self.eventQueue)
+            #print(self.eventQueue)
             for event in self.eventQueue:
                 if event.eventType == membership_pb2.Event.JOIN and self.id == "Introducer":
                     newmember = MemberInfo(event.memberId, event.memberIp, event.memberPort)
@@ -192,7 +192,7 @@ class Member(object):
             except:
                 print(data)
                 print(msgRecvd)
-            logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
+            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             # append the piggybacked events to local eventQueue
             with self.eventQueueLock:
                 for event in msgRecvd.events:
