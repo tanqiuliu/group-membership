@@ -75,7 +75,11 @@ class Member(object):
             return
         curMemberIdList = list(self.memberList.keys())
         random.shuffle(curMemberIdList)
-        indirectMembers = curMemberIdList[0:self.pingReqK]
+        indirectMembers = None
+        if len(curMemberIdList) >= 3:
+            indirectMembers = curMemberIdList[0:self.pingReqK]
+        else:
+            indirectMembers = curMemberIdList
         msg = self.constructPingReqMsg(target_id)
         for memberId in indirectMembers:
             candi_addr = self.memberList[memberId].ip, self.memberList[memberId].port
