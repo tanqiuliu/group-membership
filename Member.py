@@ -197,6 +197,8 @@ class Member(object):
                             continue
                         elif event.eventType == membership_pb2.Event.LEAVE and not event.memberId in self.memberList.keys():
                             continue
+                        elif event.eventType == membership_pb2.Event.FAIL and not event.memberId in self.memberList.keys():
+                            continue
                         else:
                             self.eventQueue.append(event)
             # handle different types of messages
