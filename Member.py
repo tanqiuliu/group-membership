@@ -65,7 +65,7 @@ class Member(object):
         else:
             msg = self.constructPingMsg()
         #self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
-        #logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+        logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
         if random.random() < 0.8:       # randomly drop some packet to test ping-req
             self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
 
@@ -154,7 +154,6 @@ class Member(object):
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
                         print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
-                        print(self.memberList.keys())
                         self.memberList[member.id] = member
                     else:
                         continue
@@ -174,7 +173,7 @@ class Member(object):
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
-            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
+            logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             '''
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if not msgRecvd.sourceId in self.memberList.keys():
