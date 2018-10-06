@@ -193,16 +193,19 @@ class Member(object):
             with self.eventQueueLock:
                 for event in msgRecvd.events:
                     if event not in self.eventQueue:        # avoid duplicate events, need a expiration mechanism according to period
-                        if event.eventType == membership_pb2.Event.LEAVE and not event.memberId in self.memberList.keys():
+                        if event.eventType == membership_pb2.Event.JOIN and event.memberId in self.memberList.keys():
+                            continue
+                        elif event.eventType == membership_pb2.Event.LEAVE and not event.memberId in self.memberList.keys():
                             continue
                         else:
                             self.eventQueue.append(event)
             # handle different types of messages
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if msgRecvd.seqNum > 0:
-                    print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
-                    newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
-                    self.memberList[msgRecvd.sourceId] = newmember
+                    if self.id != "Introducer":
+                        print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
+                        newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
+                        self.memberList[msgRecvd.sourceId] = newmember
                     ack_msg = self.constructAckMsg(msgRecvd)
                     self.sock.sendto(ack_msg.SerializeToString(), their_addr)
                 elif msgRecvd.seqNum < 0:
