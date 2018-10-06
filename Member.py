@@ -65,7 +65,7 @@ class Member(object):
         else:
             msg = self.constructPingMsg()
         #self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
-        logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+        logging.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
         if random.random() < 0.8:       # randomly drop some packet to test ping-req
             self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
 
