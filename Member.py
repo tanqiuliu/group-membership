@@ -193,7 +193,12 @@ class Member(object):
             with self.eventQueueLock:
                 for event in msgRecvd.events:
                     if event not in self.eventQueue:        # avoid duplicate events, need a expiration mechanism according to period
-                        self.eventQueue.append(event)
+                        if event.messageType == membership_pb2.Event.LEAVE and event.memberId in self.memberList.keys():
+                            self.eventQueue.append(event)
+                        elif event.messageType == membership_pb2.Event.JOIN and not event.memberId in self.memberList.keys():
+                            self.eventQueue.append(event)
+                        else:
+                            self.eventQueue.append(event)
             # handle different types of messages
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if msgRecvd.seqNum > 0:
