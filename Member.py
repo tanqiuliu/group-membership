@@ -36,7 +36,7 @@ class Member(object):
         # self.memberList = {}    # key = MemberInfo.id, value = MemberInfo
         self.memberList = {
         }
-        self.period = 0.01   # in seconds
+        self.period = 0.1   # in seconds
         if introducerId == "":
             # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
             self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()    # for debug
