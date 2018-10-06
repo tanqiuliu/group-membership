@@ -120,7 +120,8 @@ class Member(object):
                             failEvent.memberId = prev_target_id
                             failEvent.memberIp = self.memberList[prev_target_id].ip
                             failEvent.memberPort = self.memberList[prev_target_id].port
-                            self.eventQueue.append(failEvent)
+                            if not prev_target_id == self.id:
+                                self.eventQueue.append(failEvent)
                             #logging.warning("%s failed!" %prev_target_id)
                     self.ackQueue = []
 
