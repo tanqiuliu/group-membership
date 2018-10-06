@@ -305,11 +305,12 @@ class Member(object):
         with self.eventQueueLock:
             for event in self.eventQueue:
                 if event.memberId != self.id:
-                    event_piggybacked = msg.events.add()
-                    event_piggybacked.eventType = event.eventType
-                    event_piggybacked.memberId = event.memberId
-                    event_piggybacked.memberIp = event.memberIp
-                    event_piggybacked.memberPort = event.memberPort
+                    if event.eventType == membership_pb2.EVENT.JOIn and not event.memberId in self.memberList.keys():
+                        event_piggybacked = msg.events.add()
+                        event_piggybacked.eventType = event.eventType
+                        event_piggybacked.memberId = event.memberId
+                        event_piggybacked.memberIp = event.memberIp
+                        event_piggybacked.memberPort = event.memberPort
 
     def runRecv(self):
         th = threading.Thread(target=self._runRecv)
