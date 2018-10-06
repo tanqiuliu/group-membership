@@ -152,7 +152,7 @@ class Member(object):
             for event in self.eventQueue:
                 if event.eventType == membership_pb2.Event.JOIN and self.id == "Introducer":
                     newmember = MemberInfo(event.memberId, event.memberIp, event.memberPort)
-                    if newmember.id != self.id and not member.id in self.memberList.keys():
+                    if newmember.id != self.id and not newmember.id in self.memberList.keys():
                         self.memberList[newmember.id] = newmember
                         for member in self.memberList:
                             self.ping(newmember.id, 1)
