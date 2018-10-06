@@ -305,7 +305,7 @@ class Member(object):
         with self.eventQueueLock:
             for event in self.eventQueue:
                 if event.memberId != self.id:
-                    if event.eventType == membership_pb2.EVENT.JOIn and not event.memberId in self.memberList.keys():
+                    if event.eventType == membership_pb2.Event.JOIN and not event.memberId in self.memberList.keys():
                         event_piggybacked = msg.events.add()
                         event_piggybacked.eventType = event.eventType
                         event_piggybacked.memberId = event.memberId
