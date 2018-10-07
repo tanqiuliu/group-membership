@@ -37,14 +37,14 @@ class Member(object):
         # self.memberList = {}    # key = MemberInfo.id, value = MemberInfo
         self.memberList = {
         }
-        self.period = 1   # in seconds
+        self.period = 0.5   # in seconds
         if introducerId == "":
             # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
             self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()    # for debug
         else:
             self.id = "Introducer"
         self.leaving = -1
-        self.pingTimeout = 0.3
+        self.pingTimeout = 0.15
         self.pingReqK = 3
         self.seqNum = 1
         # self.logFilename = 'membership.log'
@@ -82,7 +82,6 @@ class Member(object):
         msg = None
         if pingNum == 3:
             msg = self.constructJoiningPingMsg(True, newmember)
-            print("sending " + str(msg.sourceId) + " to " + str(target_ip) + "  " + str(target_port))
         elif pingNum == 2:
             msg = self.constructLeavingPingMsg()
         elif pingNum == 1:
@@ -126,14 +125,8 @@ class Member(object):
         prev_target_id = ""
         pingReqFlag = False
         g = g_tick()
-        while True:
+        while self.leaving != 0:
             time.sleep(next(g))
-            if self.leaving > 0:
-                self.logger.info("leaving the group. Sending leaving ping to {}.".format(curMemberIdList[self.leaving - 1]))
-                self.ping(curMemberIdList[self.leaving - 1], 2)
-                self.seqNum += 1
-                self.leaving -= 1
-            else:
                 if c >= len(curMemberIdList):
                     curMemberIdList = list(self.memberList.keys())
                     random.shuffle(curMemberIdList)
@@ -443,9 +436,9 @@ if __name__ == "__main__":
             print("Starting leave with " + str(member.leaving))
             break;
 
-    while member.leaving != 0:
-        print(member.leaving)
-        continue
+    member.leaving = 0
+    for memberId in member.memberList.keys():
+        member.ping(memberId, 2)
 
     # Marked: self node is leaving in the log.
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
