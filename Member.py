@@ -52,7 +52,7 @@ class Member(object):
     # If pingNum = 0, its a normal ping, 1 is a joinPing for first sending to introducer, 2 is a leavePing to all other nodes
     def ping(self, target_id, pingNum=0):
         if target_id not in self.memberList:
-            logging.debug("%s is not in the memberList" %target_id)
+            #logging.debug("%s is not in the memberList" %target_id)
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
@@ -70,7 +70,7 @@ class Member(object):
 
     def pingReq(self, target_id):
         if target_id not in self.memberList:
-            logging.debug("%s is not in the memberList" %target_id)
+            #logging.debug("%s is not in the memberList" %target_id)
             return
         curMemberIdList = list(self.memberList.keys())
         random.shuffle(curMemberIdList)
