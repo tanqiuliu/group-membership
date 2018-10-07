@@ -37,14 +37,14 @@ class Member(object):
         # self.memberList = {}    # key = MemberInfo.id, value = MemberInfo
         self.memberList = {
         }
-        self.period = 0.1   # in seconds
+        self.period = 1   # in seconds
         if introducerId == "":
             # self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()
             self.id = ip + ':' + str(port) + '_' + datetime.datetime.now().isoformat()    # for debug
         else:
             self.id = "Introducer"
         self.leaving = -1
-        self.pingTimeout = 0.02
+        self.pingTimeout = 0.3
         self.pingReqK = 3
         self.seqNum = 1
         # self.logFilename = 'membership.log'
