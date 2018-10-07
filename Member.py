@@ -127,45 +127,45 @@ class Member(object):
         g = g_tick()
         while self.leaving != 0:
             time.sleep(next(g))
-                if c >= len(curMemberIdList):
-                    curMemberIdList = list(self.memberList.keys())
-                    random.shuffle(curMemberIdList)
-                    c = 0
-                # check if recv ack
-                with self.ackQueueLock:
-                    if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
-                        if prev_target_id in self.memberList:
-                            failEvent = membership_pb2.Event()
-                            failEvent.eventType = membership_pb2.Event.FAIL
-                            failEvent.memberId = prev_target_id
-                            failEvent.memberIp = self.memberList[prev_target_id].ip
-                            failEvent.memberPort = self.memberList[prev_target_id].port
-                            if not prev_target_id == self.id:
-                                self.eventQueue.append(failEvent)
-                            self.logger.info("Failure detected {}".format(prev_target_id))
-                    self.ackQueue = []
+            if c >= len(curMemberIdList):
+                curMemberIdList = list(self.memberList.keys())
+                random.shuffle(curMemberIdList)
+                c = 0
+            # check if recv ack
+            with self.ackQueueLock:
+                if (prev_target_id, self.seqNum - 1) not in self.ackQueue and prev_target_id != "":
+                    if prev_target_id in self.memberList:
+                        failEvent = membership_pb2.Event()
+                        failEvent.eventType = membership_pb2.Event.FAIL
+                        failEvent.memberId = prev_target_id
+                        failEvent.memberIp = self.memberList[prev_target_id].ip
+                        failEvent.memberPort = self.memberList[prev_target_id].port
+                        if not prev_target_id == self.id:
+                            self.eventQueue.append(failEvent)
+                        self.logger.info("Failure detected {}".format(prev_target_id))
+                self.ackQueue = []
 
 
-                if (len(curMemberIdList) - 1) != -1:
-                    self.ping(curMemberIdList[c])
-                    prev_target_id = curMemberIdList[c]
-                # update memberList, make sure update after ping since updating memberList will empty eventQueue
-                self.updateMemberList()
-                time.sleep(next(g))
+            if (len(curMemberIdList) - 1) != -1:
+                self.ping(curMemberIdList[c])
+                prev_target_id = curMemberIdList[c]
+            # update memberList, make sure update after ping since updating memberList will empty eventQueue
+            self.updateMemberList()
+            time.sleep(next(g))
 
-                with self.ackQueueLock:
-                    if (prev_target_id, self.seqNum) not in self.ackQueue and prev_target_id != "":
-                        pingReqFlag = True
-                if pingReqFlag:
-                    self.logger.debug("did not receive ack from {}".format(prev_target_id))
-                    if c < len(self.memberList.keys()):
-                        self.pingReq(curMemberIdList[c])
-                    pingReqFlag = False
+            with self.ackQueueLock:
+                if (prev_target_id, self.seqNum) not in self.ackQueue and prev_target_id != "":
+                    pingReqFlag = True
+            if pingReqFlag:
+                self.logger.debug("did not receive ack from {}".format(prev_target_id))
+                if c < len(self.memberList.keys()):
+                    self.pingReq(curMemberIdList[c])
+                pingReqFlag = False
 
-                if (len(list(self.memberList.keys())) - 1) != -1:
-                    c += 1
-                self.seqNum += 1
-                time.sleep(next(g))
+            if (len(list(self.memberList.keys())) - 1) != -1:
+                c += 1
+            self.seqNum += 1
+            time.sleep(next(g))
 
     def updateMemberList(self):
         with self.eventQueueLock:
@@ -433,7 +433,6 @@ if __name__ == "__main__":
             #Marked: Introducer added into this nodes membershipList
         elif cmd == "Leave":
             member.leaving = len(member.memberList.keys())
-            print("Starting leave with " + str(member.leaving))
             break;
 
     member.leaving = 0
