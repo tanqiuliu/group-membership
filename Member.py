@@ -159,15 +159,15 @@ class Member(object):
                 elif event.eventType == membership_pb2.Event.JOIN:
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
-                        #print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
+                        print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
                         self.memberList[member.id] = member
                 elif event.eventType == membership_pb2.Event.LEAVE:
                     if event.memberId in self.memberList and event.memberId != self.id:
-                        #print("We received a node Leave event from ip: " + event.memberIp)
+                        print("We received a node Leave event from ip: " + event.memberIp)
                         self.memberList.pop(event.memberId)
                 elif event.eventType == membership_pb2.Event.FAIL:
                     if event.memberId in self.memberList:
-                        #print("We received a failure from node : " + str(event.memberId))
+                        print("We received a failure from node : " + str(event.memberId))
                         self.memberList.pop(event.memberId)
                         #logging.debug("%s is removed from memberList" %event.memberId)
             self.eventQueue = []
@@ -208,7 +208,7 @@ class Member(object):
             # handle different types of messages
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if msgRecvd.seqNum > 0:
-                    if self.id != "Introducer":
+                    if self.id != "Introducer" and not msgRecvd.sourceId in self.memberList.keys():
                         #print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
                         newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                         self.memberList[msgRecvd.sourceId] = newmember
