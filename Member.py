@@ -13,7 +13,8 @@ import membership_pb2
 cmd = ""
 MAXDATASIZE = 1024
 LOGPATH = 'log'
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
+
 
 class MemberInfo(object):
     def __init__(self, id, ip, port):
@@ -46,17 +47,35 @@ class Member(object):
         self.pingTimeout = 0.02
         self.pingReqK = 3
         self.seqNum = 1
+        # self.logFilename = 'membership.log'
+        self.initLogger('membership.log')
         self.runRecv()
         self.runPingThreaded()
+
+    def initLogger(self, logFilename):
+        self.logger = logging.getLogger(self.id)
+        self.fh = logging.FileHandler(logFilename)
+        self.fh.setLevel(logging.DEBUG)
+        self.ch = logging.StreamHandler()
+        self.ch.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.fh.setFormatter(formatter)
+        self.ch.setFormatter(formatter)
+        self.logger.addHandler(self.fh)
+        self.logger.addHandler(self.ch)
+        
+    def sendto(self, data, addr):
+        if random.random() > 0:
+            self.sock.sendto(data, addr)
 
     # If pingNum = 0, its a normal ping, 1 is a joinPing for first sending to introducer, 2 is a leavePing to all other nodes
     def ping(self, target_id, pingNum=0):
         if target_id not in self.memberList:
-            #logging.debug("%s is not in the memberList" %target_id)
+            self.logger.debug("%s is not in the memberList" %target_id)
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
-        #logging.debug("ping to {}, seqNum = {}, t = {:.4f}".format(target_id, self.seqNum, time.time()))
+        self.logger.info("ping to {}, seqNum = {}".format(target_id, self.seqNum))
         msg = None
         if pingNum == 2:
             msg = self.constructLeavingPingMsg()
@@ -64,9 +83,8 @@ class Member(object):
             msg = self.constructJoiningPingMsg()
         else:
             msg = self.constructPingMsg()
-        #self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
-        #logging.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
-        self.sock.sendto(msg.SerializeToString(), (target_ip, target_port))
+        # self.logger.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
+        self.sendto(msg.SerializeToString(), (target_ip, target_port))
 
     def pingReq(self, target_id):
         if target_id not in self.memberList:
@@ -82,7 +100,8 @@ class Member(object):
         msg = self.constructPingReqMsg(target_id)
         for memberId in indirectMembers:
             candi_addr = self.memberList[memberId].ip, self.memberList[memberId].port
-            self.sock.sendto(msg.SerializeToString(), candi_addr)
+            self.logger.debug("send ping-req to {}, targeting {}".format(candi_addr, target_id))
+            self.sendto(msg.SerializeToString(), candi_addr)
 
     def runPing(self):
         def g_tick():
@@ -101,7 +120,7 @@ class Member(object):
         while True:
             time.sleep(next(g))
             if self.leaving > 0:
-                #print("We are now pinging a leave to " + str(curMemberIdList[self.leaving - 1]))
+                self.logger.info("leaving the group. Sending leaving ping to {}.".format(curMemberIdList[self.leaving - 1]))
                 self.ping(curMemberIdList[self.leaving - 1], 2)
                 self.seqNum += 1
                 self.leaving -= 1
@@ -121,7 +140,7 @@ class Member(object):
                             failEvent.memberPort = self.memberList[prev_target_id].port
                             if not prev_target_id == self.id:
                                 self.eventQueue.append(failEvent)
-                            #logging.warning("%s failed!" %prev_target_id)
+                            self.logger.info("Failure detected {}".format(prev_target_id))
                     self.ackQueue = []
 
 
@@ -136,7 +155,7 @@ class Member(object):
                     if (prev_target_id, self.seqNum) not in self.ackQueue and prev_target_id != "":
                         pingReqFlag = True
                 if pingReqFlag:
-                    #logging.debug("Did not receive ack from %s, sending ping-req." % prev_target_id)
+                    self.logger.debug("did not receive ack from {}".format(prev_target_id))
                     if c < len(self.memberList.keys()):
                         self.pingReq(curMemberIdList[c])
                     pingReqFlag = False
@@ -155,25 +174,30 @@ class Member(object):
                     if newmember.id != self.id and not newmember.id in self.memberList.keys():
                         self.memberList[newmember.id] = newmember
                         # Marked: Special case: Introducer adds a node into his membershipList after the node reached out and sends a Join Ping to all nodes in membershipList
+                        self.logger.info("found {} is joinning.".format(newmember.id))
                         for member in self.memberList:
-                            self.ping(newmember.id, 1)
+                            self.logger.info("ping to all telling {} is joining.".format(newmember.id))
+                            self.ping(newmember.id, 1)       # <= shouldn't this be member.id ???
                 elif event.eventType == membership_pb2.Event.JOIN:
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
-                        print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
+                        # print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
+                        self.logger.info("new member event: {}, add to member list".format(member.id))
                         # Marked: Node added other node with a Join message introduced by Introducer
                         self.memberList[member.id] = member
                 elif event.eventType == membership_pb2.Event.LEAVE:
                     if event.memberId in self.memberList and event.memberId != self.id:
-                        print("We received a node Leave event from ip: " + event.memberIp)
+                        # print("We received a node Leave event from ip: " + event.memberIp)
                         #Marked: log Node leave from event.memberId
+                        self.logger.info("leaving event: {}, remove from member list".format(event.memberId))
                         self.memberList.pop(event.memberId)
                 elif event.eventType == membership_pb2.Event.FAIL:
                     if event.memberId in self.memberList:
-                        print("We received a failure from node : " + str(event.memberId))
+                        # print("We received a failure from node : " + str(event.memberId))
                         # Marked: log Node failure from event.memberId
+                        self.logger.info("failure event: {} has failed, remove from member list".format(event.memberId))
                         self.memberList.pop(event.memberId)
-                        #logging.debug("%s is removed from memberList" %event.memberId)
+                        
             self.eventQueue = []
 
     def _runRecv(self):
@@ -189,14 +213,15 @@ class Member(object):
                     newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                     self.memberList[msgRecvd.sourceId] = newmember
                 ack_msg = self.constructAckMsg(msgRecvd)
-                self.sock.sendto(ack_msg.SerializeToString(), their_addr)
+                self.sendto(ack_msg.SerializeToString(), their_addr)
             '''
             try:
                 msgRecvd.ParseFromString(data)
             except:
-                print(data)
-                print(msgRecvd)
-            #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
+                # print(data)
+                # print(msgRecvd)
+                self.logger.debug("Error encountered while parsing message")
+            self.logger.debug("received {} from {}".format(msgRecvd.msgType, msgRecvd.sourceId))
             # append the piggybacked events to local eventQueue
             with self.eventQueueLock:
                 for event in msgRecvd.events:
@@ -215,14 +240,15 @@ class Member(object):
                     if self.id != "Introducer" and not msgRecvd.sourceId in self.memberList.keys():
                         #print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
                         #Marked: Node receives ping and adds msgRecvd sourceId into memberList
+                        self.logger.info("received ping from unknown node: {}".format(msgRecvd.sourceId))
                         newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                         self.memberList[msgRecvd.sourceId] = newmember
                     ack_msg = self.constructAckMsg(msgRecvd)
-                    self.sock.sendto(ack_msg.SerializeToString(), their_addr)
+                    self.sendto(ack_msg.SerializeToString(), their_addr)
                 elif msgRecvd.seqNum < 0:
                     assert msgRecvd.targetId != None
                     ack_msg = self.constructAckReqMsg(msgRecvd)
-                    self.sock.sendto(ack_msg.SerializeToString(), their_addr)
+                    self.sendto(ack_msg.SerializeToString(), their_addr)
             elif msgRecvd.msgType == membership_pb2.PingAck.ACK:
                 with self.ackQueueLock:
                     self.ackQueue.append((msgRecvd.sourceId, abs(msgRecvd.seqNum)))
@@ -239,7 +265,7 @@ class Member(object):
                     continue
                 indirect_ack = self.constructIndirectAckMsg(msgRecvd)
                 ack_target_addr = self.memberList[msgRecvd.targetId].ip, self.memberList[msgRecvd.targetId].port
-                self.sock.sendto(indirect_ack.SerializeToString(), ack_target_addr)
+                self.sendto(indirect_ack.SerializeToString(), ack_target_addr)
 
     def constructPingMsg(self):
         msg = membership_pb2.PingAck()
@@ -371,6 +397,7 @@ if __name__ == "__main__":
             print("The ids in the membership list are: \n ===================== \n" + "\n".join(str(x) for x in member.memberList.keys()) + "\n ===================== \n")
         elif cmd == "Join":
             member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
+            # member.memberList['Introducer'] = MemberInfo('Introducer', '127.0.0.1', 12301)
             member.ping('Introducer', 1)
             #Marked: Introducer added into this nodes membershipList
         elif cmd == "Leave":
