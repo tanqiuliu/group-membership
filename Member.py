@@ -80,12 +80,18 @@ class Member(object):
         target_port = self.memberList[target_id].port
         self.logger.info("ping to {}, seqNum = {}".format(target_id, self.seqNum))
         msg = None
-        if pingNum == 2:
+        if pingNum == 3:
+            msg = self.constructJoiningPingMsg(True, newmember)
+            print("sending " + str(msg.sourceId) + " to " + str(target_ip) + "  " + str(target_port))
+        elif pingNum == 2:
             msg = self.constructLeavingPingMsg()
         elif pingNum == 1:
             msg = self.constructJoiningPingMsg()
+        elif pingNum == 4:
+            msg = self.constructIntroducerToReceiverMsg()
         else:
             msg = self.constructPingMsg()
+
         # self.logger.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
         self.sendto(msg.SerializeToString(), (target_ip, target_port))
 
@@ -177,10 +183,12 @@ class Member(object):
                     if newmember.id != self.id and not newmember.id in self.memberList.keys():
                         self.memberList[newmember.id] = newmember
                         # Marked: Special case: Introducer adds a node into his membershipList after the node reached out and sends a Join Ping to all nodes in membershipList
-                        self.logger.info("found {} is joinning.".format(newmember.id))
-                        for member in self.memberList:
-                            self.logger.info("ping to all telling {} is joining.".format(newmember.id))
-                            self.ping(newmember.id, 1)       # <= shouldn't this be member.id ???
+                        # curmemberList = self.memberList.keys()
+                        # for i in range(0, len(curmemberList)):
+                        #   random.shuffle(curmemberList)
+                        for memberId in self.memberList.keys():
+                            self.ping(memberId, 3, newmember)
+                        self.ping(newmember.id, 4)
                 elif event.eventType == membership_pb2.Event.JOIN:
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
@@ -240,7 +248,7 @@ class Member(object):
             # handle different types of messages
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if msgRecvd.seqNum > 0:
-                    if self.id != "Introducer" and not msgRecvd.sourceId in self.memberList.keys():
+                    if (self.id != "Introducer") and (not msgRecvd.sourceId in self.memberList.keys()) and (self.id != msgRecvd.sourceId):
                         #print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
                         #Marked: Node receives ping and adds msgRecvd sourceId into memberList
                         self.logger.info("received ping from unknown node: {}".format(msgRecvd.sourceId))
@@ -290,17 +298,42 @@ class Member(object):
         event.memberPort = self.port
         return msg
 
-    def constructJoiningPingMsg(self):
+    def constructIntroducerToReceiverMsg(self):
         msg = membership_pb2.PingAck()
         msg.sourceId = self.id
         msg.seqNum = self.seqNum
         msg.msgType = membership_pb2.PingAck.PING
-        event = msg.events.add()
-        event.eventType = membership_pb2.Event.JOIN
-        event.memberId = self.id
-        event.memberIp = self.ip
-        event.memberPort = self.port
+        for member in self.memberList.keys():
+            event = msg.events.add()
+            event.eventType = membership_pb2.Event.JOIN
+            event.memberId = self.memberList[member].id
+            event.memberIp = self.memberList[member].ip
+            event.memberPort = self.memberList[member].port
         return msg
+
+    def constructJoiningPingMsg(self, introduced=False, introducedinfo=None):
+        if introduced:
+            msg = membership_pb2.PingAck()
+            msg.sourceId = introducedinfo.id
+            msg.seqNum = self.seqNum
+            msg.msgType = membership_pb2.PingAck.PING
+            event = msg.events.add()
+            event.eventType = membership_pb2.Event.JOIN
+            event.memberId = introducedinfo.id
+            event.memberIp = introducedinfo.ip
+            event.memberPort = introducedinfo.port
+            return msg
+        else:
+            msg = membership_pb2.PingAck()
+            msg.sourceId = self.id
+            msg.seqNum = self.seqNum
+            msg.msgType = membership_pb2.PingAck.PING
+            event = msg.events.add()
+            event.eventType = membership_pb2.Event.JOIN
+            event.memberId = self.id
+            event.memberIp = self.ip
+            event.memberPort = self.port
+            return msg
 
     def constructAckMsg(self, ping_msg):
         msg = membership_pb2.PingAck()
