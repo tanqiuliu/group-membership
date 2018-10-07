@@ -154,20 +154,24 @@ class Member(object):
                     newmember = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if newmember.id != self.id and not newmember.id in self.memberList.keys():
                         self.memberList[newmember.id] = newmember
+                        # Marked: Special case: Introducer adds a node into his membershipList after the node reached out and sends a Join Ping to all nodes in membershipList
                         for member in self.memberList:
                             self.ping(newmember.id, 1)
                 elif event.eventType == membership_pb2.Event.JOIN:
                     member = MemberInfo(event.memberId, event.memberIp, event.memberPort)
                     if member.id != self.id and not member.id in self.memberList.keys():
                         print("We have a new member joining who's ID is: " + str(member.id) + " Ip:" + str(member.ip) + " Port:" +  str(member.port))
+                        # Marked: Node added other node with a Join message introduced by Introducer
                         self.memberList[member.id] = member
                 elif event.eventType == membership_pb2.Event.LEAVE:
                     if event.memberId in self.memberList and event.memberId != self.id:
                         print("We received a node Leave event from ip: " + event.memberIp)
+                        #Marked: log Node leave from event.memberId
                         self.memberList.pop(event.memberId)
                 elif event.eventType == membership_pb2.Event.FAIL:
                     if event.memberId in self.memberList:
                         print("We received a failure from node : " + str(event.memberId))
+                        # Marked: log Node failure from event.memberId
                         self.memberList.pop(event.memberId)
                         #logging.debug("%s is removed from memberList" %event.memberId)
             self.eventQueue = []
@@ -210,6 +214,7 @@ class Member(object):
                 if msgRecvd.seqNum > 0:
                     if self.id != "Introducer" and not msgRecvd.sourceId in self.memberList.keys():
                         #print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
+                        #Marked: Node receives ping and adds msgRecvd sourceId into memberList
                         newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                         self.memberList[msgRecvd.sourceId] = newmember
                     ack_msg = self.constructAckMsg(msgRecvd)
@@ -350,8 +355,10 @@ if __name__ == "__main__":
     #Sets up the member to be an introducer or not based on the 2nd parameter
     member = None
     if(len(sys.argv) == 3):
+        #Marked: Introducer instantiates and makes an empty membershipList
         member = Member(ip, port, 'isIntroducer')
     else:
+        #Marked: Regular node instantiates and makes an empty membershipList
         member = Member(ip, port)
 
     #While the cmd is not to Leave the membership list, we want to offer giving out the Id, current membership list, or
@@ -365,6 +372,7 @@ if __name__ == "__main__":
         elif cmd == "Join":
             member.memberList['Introducer'] = MemberInfo('Introducer', 'fa18-cs425-g45-01.cs.illinois.edu', 12345)
             member.ping('Introducer', 1)
+            #Marked: Introducer added into this nodes membershipList
         elif cmd == "Leave":
             member.leaving = len(member.memberList.keys())
             print("Starting leave with " + str(member.leaving))
@@ -374,6 +382,7 @@ if __name__ == "__main__":
         print(member.leaving)
         continue
 
+    # Marked: self node is leaving in the log.
     print("Node " + member.id + " has now left the membership list at: " + str(datetime.datetime.now()))
     sys.exit(-1)
 
