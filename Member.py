@@ -54,6 +54,9 @@ class Member(object):
 
     def initLogger(self, logFilename):
         self.logger = logging.getLogger(self.id)
+        self.logger.setLevel(logging.DEBUG)
+        if os.path.exists(logFilename):
+            os.remove(logFilename)
         self.fh = logging.FileHandler(logFilename)
         self.fh.setLevel(logging.DEBUG)
         self.ch = logging.StreamHandler()
