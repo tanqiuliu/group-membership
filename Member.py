@@ -78,7 +78,7 @@ class Member(object):
             return
         target_ip = self.memberList[target_id].ip
         target_port = self.memberList[target_id].port
-        self.logger.info("ping to {}, seqNum = {}".format(target_id, self.seqNum))
+        self.logger.debug("ping to {}, seqNum = {}".format(target_id, self.seqNum))
         msg = None
         if pingNum == 3:
             msg = self.constructJoiningPingMsg(True, newmember)
