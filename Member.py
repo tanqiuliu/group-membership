@@ -248,12 +248,14 @@ class Member(object):
             # handle different types of messages
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
                 if msgRecvd.seqNum > 0:
+                    '''
                     if (self.id != "Introducer") and (not msgRecvd.sourceId in self.memberList.keys()) and (self.id != msgRecvd.sourceId):
                         #print("We have a new member joining who's ID is: " + str(msgRecvd.sourceId) + " Ip:" + str(their_addr[0]) + " Port:" + str(their_addr[1]))
                         #Marked: Node receives ping and adds msgRecvd sourceId into memberList
                         self.logger.info("received ping from unknown node: {}".format(msgRecvd.sourceId))
                         newmember = MemberInfo(msgRecvd.sourceId, their_addr[0], their_addr[1])
                         self.memberList[msgRecvd.sourceId] = newmember
+                    '''
                     ack_msg = self.constructAckMsg(msgRecvd)
                     self.sendto(ack_msg.SerializeToString(), their_addr)
                 elif msgRecvd.seqNum < 0:
