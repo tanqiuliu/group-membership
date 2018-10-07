@@ -72,7 +72,7 @@ class Member(object):
             self.sock.sendto(data, addr)
 
     # If pingNum = 0, its a normal ping, 1 is a joinPing for first sending to introducer, 2 is a leavePing to all other nodes
-    def ping(self, target_id, pingNum=0):
+    def ping(self, target_id, pingNum=0, newmember=None):
         if target_id not in self.memberList:
             self.logger.debug("%s is not in the memberList" %target_id)
             return
