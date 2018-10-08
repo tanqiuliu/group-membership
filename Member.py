@@ -68,7 +68,7 @@ class Member(object):
         self.logger.addHandler(self.ch)
         
     def sendto(self, data, addr):
-        if random.random() > 0:
+        if random.random() > 0.03:
             self.sock.sendto(data, addr)
 
     # If pingNum = 0, its a normal ping, 1 is a joinPing for first sending to introducer, 2 is a leavePing to all other nodes
@@ -94,8 +94,7 @@ class Member(object):
 
         # self.logger.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
         serialized_msg = msg.SerializeToString()
-        self.logger.debug("Experiment 1: Pinging amount : |" + str(len(serialized_msg)) + "| bytes at |" + str(time.time()))
-        print("Serialized msg for pinging is " + str(serialized_msg) + "\n")
+        #self.logger.debug("Experiment 1: Pinging amount : |" + str(len(serialized_msg)) + "| bytes at |" + str(time.time()))
 
         self.sendto(serialized_msg, (target_ip, target_port))
 
@@ -213,10 +212,8 @@ class Member(object):
         while True:
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
-            print("Data before msgRecvd" + str(data) + "\n")
             msgRecvd.ParseFromString(data)
-            print("Message after data received and parseFromString " + str(data) + "\n")
-            self.logger.debug("Experiment 1: Ack Received: |" + str(len(data)) + "| bytes at |" + str(time.time()) + "|" + str(data))
+            #self.logger.debug("Experiment 1: Ack Received: |" + str(len(data)) + "| bytes at |" + str(time.time()))
             #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             '''
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
