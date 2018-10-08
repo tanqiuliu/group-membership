@@ -213,7 +213,8 @@ class Member(object):
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
-            self.logger.debug("Experiment 1: Ack Received: |" + str(len(data)) + "| bytes at |" + str(time.time()))
+            print(data)
+            self.logger.debug("Experiment 1: Ack Received: |" + str(len(data)) + "| bytes at |" + str(time.time()) + "|" + str(data))
             #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             '''
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
