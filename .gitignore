@@ -1,5 +1,6 @@
 # log data
 *.log
+.idea/
 
 # MacOS
 ********.DS_Store
