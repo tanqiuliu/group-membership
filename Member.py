@@ -94,7 +94,7 @@ class Member(object):
 
         # self.logger.debug("ping to {}, seqNum = {}, t = {:.4f} at addr: {}, port: {}".format(target_id, self.seqNum, time.time(), target_ip, target_port))
         serialized_msg = msg.SerializeToString()
-        self.logger("Experiment 1: Pinging amount" + len(serialized_msg) + " at " datetime.datetime.now().isoformat())
+        self.logger.debug("Experiment 1: Pinging amount : " + str(len(serialized_msg)) + " bytes at " + datetime.datetime.now().isoformat())
 
         self.sendto(serialized_msg, (target_ip, target_port))
 
@@ -213,7 +213,7 @@ class Member(object):
             msgRecvd = membership_pb2.PingAck()
             data, their_addr = self.sock.recvfrom(MAXDATASIZE)
             msgRecvd.ParseFromString(data)
-            self.logger.debug("Experiment 1: Ack Received " + len(data) + "at" + datetime.datetime.now().isoformat())
+            self.logger.debug("Experiment 1: Ack Received: " + str(len(data)) + " bytes at " + datetime.datetime.now().isoformat())
             #logging.info("received %s from %s" %(msgRecvd.msgType, msgRecvd.sourceId))
             '''
             if msgRecvd.msgType == membership_pb2.PingAck.PING:
